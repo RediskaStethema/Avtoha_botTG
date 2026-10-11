@@ -26,8 +26,3 @@ Thumbs.db
 desktop.ini
 .DS_Store
 
-# Claude Code: settings, instructions and local files
-.claude/
-CLAUDE.md
-CLAUDE.local.md
-**/CLAUDE.md
