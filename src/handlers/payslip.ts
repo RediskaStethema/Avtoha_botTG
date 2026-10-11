@@ -11,6 +11,11 @@ import {requireGuard} from "./guard.js";
 
 const MAX_PDF_BYTES = 5 * 1024 * 1024;
 
+// pdf.js runs on the main thread, so a huge document would block the bot; a payslip is 1–2 pages
+const MAX_PAGES = 3;
+
+class NotAPayslipError extends Error {}
+
 // Fewer characters than this means a scanned image without a text layer
 const MIN_TEXT_LENGTH = 20;
 
@@ -31,7 +36,12 @@ async function downloadFile(fileId: string): Promise<Uint8Array> {
     // The URL contains the bot token, so it is not included in the error
     if (!response.ok) throw new Error(`File download failed: HTTP ${response.status}`);
 
-    return new Uint8Array(await response.arrayBuffer());
+    const data = new Uint8Array(await response.arrayBuffer());
+
+    // Telegram does not always report file_size, so check the real size too
+    if (data.byteLength > MAX_PDF_BYTES) throw new NotAPayslipError("PDF is too large");
+
+    return data;
 }
 
 const isPdf = (doc: TelegramBot.Document) =>
@@ -70,6 +80,8 @@ async function readPayslip(chatId: number, fileId: string, password?: string) {
         const pdf = await getDocumentProxy(data, password === undefined ? {} : { password });
 
         try {
+            if (pdf.numPages > MAX_PAGES) throw new NotAPayslipError(`PDF has ${pdf.numPages} pages`);
+
             text = (await extractText(pdf, { mergePages: true })).text;
         } finally {
             await pdf.loadingTask.destroy();
@@ -84,6 +96,10 @@ async function readPayslip(chatId: number, fileId: string, password?: string) {
                 ? "❌ Неверный пароль, попробуй ещё раз:"
                 : "🔒 Тлюш защищён паролем (обычно это номер ת.ז.). Отправь пароль — " +
                   "я использую его только чтобы открыть файл, нигде не сохраню и сразу удалю сообщение.");
+        }
+
+        if (e instanceof NotAPayslipError) {
+            return sendGuardMenu(chatId, `Это не похоже на тлюш: нужен PDF до ${MAX_PAGES} страниц и 5 МБ`);
         }
 
         console.error("Payslip reading failed:", e instanceof Error ? e.message : e);

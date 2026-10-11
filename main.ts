@@ -40,6 +40,10 @@ bot.on("message", (msg) => {
 });
 
 async function handleMessage(msg: TelegramBot.Message) {
+    // Users are identified by chat ID: in a group every member would act as the same guard
+    // and see everyone's hours, so groups and channels are ignored
+    if (msg.chat.type !== "private") return;
+
     const chatId = msg.chat.id;
     const text = msg.text;
 

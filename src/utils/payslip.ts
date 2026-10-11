@@ -47,9 +47,16 @@ function numbersIn(line: string): number[] {
 
 const inRange = (n: number, [min, max]: readonly [number, number]) => n >= min && n <= max;
 
+// The search below is cubic in the count of numbers, so a crafted PDF with long rows could freeze the bot.
+// A real payslip row has a handful of numbers; a payslip is a few thousand characters.
+const MAX_NUMBERS_PER_ROW = 30;
+const MAX_TEXT_LENGTH = 50_000;
+
 // Pairs x, y from the row with x × y ≈ some other number of the row ("quantity · rate · amount")
 function factorPairs(numbers: readonly number[]): [number, number][] {
     const pairs: [number, number][] = [];
+
+    if (numbers.length > MAX_NUMBERS_PER_ROW) return pairs;
 
     for (const a of numbers) {
         for (let i = 0; i < numbers.length; i++) {
@@ -150,7 +157,7 @@ function findMonth(lines: readonly string[]): string | undefined {
 }
 
 export function parsePayslip(text: string): ParsedPayslip {
-    const lines = normalizeLines(text);
+    const lines = normalizeLines(text.slice(0, MAX_TEXT_LENGTH));
 
     const stats = collectStats(lines);
     const result: ParsedPayslip = {};
