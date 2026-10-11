@@ -1,0 +1,28 @@
+{
+  "name": "avtoha_bot",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Telegram bot for guards to log work hours",
+  "main": "dist/main.js",
+  "scripts": {
+    "dev": "node --loader ts-node/esm main.ts",
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "node-cron": "^4.2.1",
+    "node-telegram-bot-api": "^0.66.0",
+    "unpdf": "^1.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.12.0",
+    "@types/node-telegram-bot-api": "^0.64.12",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
